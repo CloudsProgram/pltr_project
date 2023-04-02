@@ -18,7 +18,14 @@ def transform(cols):
     close = float(cols[4].text)
     adj_close = float(cols[5].text)
     volume = int(  (cols[6].text).replace(",", "")  )
-    return date, open, high, low, close, adj_close, volume
+
+    """Not converting to parquet, b/c i'm only uploading one row"""
+    df = pd.DataFrame({'date': [date], 'open': [open], 
+                       'high': [high], 'low': [low], 
+                       'close':[close], 'adj_close':[adj_close], 
+                       'volume':[volume]})
+    
+    return df, date
 
 @task(retries=2)
 def scrape_action():
@@ -56,19 +63,13 @@ def scrape_action():
 def workday_check(date, today_date):
     return date == today_date
 
-@task(log_prints=True)
-def write_local(date, open, high, low, close, adj_close, volume, today_date):
-    """Not converting to parquet, b/c i'm only uploading one roll"""
-    df = pd.DataFrame({'date': [date], 'open': [open], 
-                       'high': [high], 'low': [low], 
-                       'close':[close], 'adj_close':[adj_close], 
-                       'volume':[volume]})
-
-    """Adjust {date} back to {today_date} when done with weekend development""" 
-    path = Path(f"pltr_stock_data/pltr_stock_{date}.csv")
-    df.to_csv(path, index=False)
-    print("Scrape Job Done, csv saved to local folder")
-    return path
+# @task(log_prints=True)
+# def write_local(df, date, today_date):
+#     """Adjust {date} back to {today_date} when done with weekend development""" 
+#     path = Path(f"pltr_stock_data/pltr_stock_{date}.parquet")
+#     df.to_parquet(path, index=False, compression='gzip')
+#     print("Scrape Job Done, csv saved to local folder")
+#     return path
 
 @flow(log_prints=True)
 def scrape_stock_info(today_date):
@@ -78,16 +79,18 @@ def scrape_stock_info(today_date):
     market is closed today.
     """
     columns = scrape_action()
-    date, open, high, low, close, adj_close, volume = transform(columns)
+    df, date = transform(columns)
 
     workday = workday_check(date, today_date)
 
     """delete the following line, this is used for weekend develoopment only"""
     workday = True
 
+    """Adjust {date} back to {today_date} when done with weekend development""" 
     if workday:
-        path = write_local(date, open, high, low, close, adj_close, volume, today_date)
-        return path
+        path = Path(f"pltr_stock_data/pltr_stock_{date}.parquet")
+        #path = write_local(df, date, today_date)
+        return df, path
     else: #it's a holiday or a weekend
         print(f"Today's date is: {today_date}, Yahoo Finance stock historical data first row date is: {date}")
         print("Yahoo Finance stock record first row's date doesn't match today's date, might be a holiday")
@@ -95,12 +98,15 @@ def scrape_stock_info(today_date):
         return False       
         
 @task(log_prints=True, retries=2)    
-def write_gcs(path: Path) -> None:
+def write_gcs(df: pd.DataFrame, path: Path) -> None:
     path = Path(path).as_posix()
     gcs_block = GcsBucket.load("pltr-gcs")
-    # gcs_block.upload_from_dataframe(
-    # )
-    gcs_block.upload_from_path(from_path=path, to_path=path)
+    gcs_block.upload_from_dataframe(
+        df=df,
+        to_path=path,
+        serialization_format='parquet'
+    )
+    #gcs_block.upload_from_path(from_path=path, to_path=path)
     pass
 
 
@@ -116,7 +122,7 @@ def scrape_load_to_gcs_bq():
         2) Either a) save to local folder OR b) stops the job due to holiday
         if b) option occurs: job ends
         if a) option occurs:
-            3) upload today's scraped and saved csv onto GCS
+            3) upload today's scraped and saved parquet onto GCS
             4) append that file's data onto BigQuery
             5) utlize DBT for data transformation & put it into BigQuery
             6) Looker studio update info
@@ -133,11 +139,11 @@ def scrape_load_to_gcs_bq():
 
     # if scrape takes place, a path will be returned
     # if scrape didn't occur, False will be returned    
-    path = scrape_stock_info(today_date)
+    df, path = scrape_stock_info(today_date)
 
 
     if path:
-        write_gcs(path)
+        write_gcs(df, path)
         #write_bq(path)
    
 
