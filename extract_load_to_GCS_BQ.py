@@ -10,6 +10,7 @@ from prefect_gcp import GcpCredentials
 
 @task(log_prints=True)
 def transform(cols):
+    """only one row, so I can transform into desirable type with individual values?"""
     date = cols[0].text
     date = datetime.strptime(date, "%b %d, %Y").date() #convert to date time date
     open = float(cols[1].text)
@@ -19,7 +20,7 @@ def transform(cols):
     adj_close = float(cols[5].text)
     volume = int(  (cols[6].text).replace(",", "")  )
 
-    """Not converting to parquet, b/c i'm only uploading one row"""
+    
     df = pd.DataFrame({'date': [date], 'open': [open], 
                        'high': [high], 'low': [low], 
                        'close':[close], 'adj_close':[adj_close], 
