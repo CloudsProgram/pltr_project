@@ -35,6 +35,8 @@ def transform(df: pd.DataFrame) -> None:
     df["Close"] = (df["Close"].astype(float)).round(2) # same as above
     df["Adj Close"] = (df["Adj Close"].astype(float)).round(2) # same as above
     df["Volume"] = df["Volume"].astype('Int64') #conver str to int
+    df = df.rename(columns={'Adj Close': 'Adj_Close'})
+    df = df.rename(columns={'Date': 'Date_Recorded'})
 
     
     #making str into respective data
@@ -60,5 +62,7 @@ def web_to_gcs(dataset_url: str) -> None:
 
 if __name__ == "__main__":
     dataset_url = "Put your copied link here"
-    dataset_url = "https://query1.finance.yahoo.com/v7/finance/download/PLTR?period1=1601510400&period2=1680220800&interval=1d&events=history&includeAdjustedClose=true"
+
+    #from beg to 3/31/23
+    dataset_url = "https://query1.finance.yahoo.com/v7/finance/download/PLTR?period1=1601510400&period2=1680307200&interval=1d&events=history&includeAdjustedClose=true"
     web_to_gcs(dataset_url)

@@ -21,10 +21,19 @@ def transform(cols):
     volume = int(  (cols[6].text).replace(",", "")  )
 
     
-    df = pd.DataFrame({'date': [date], 'open': [open], 
-                       'high': [high], 'low': [low], 
-                       'close':[close], 'adj_close':[adj_close], 
-                       'volume':[volume]})
+    df = pd.DataFrame({'Date': [date], 'Open': [open], 
+                       'High': [high], 'Low': [low], 
+                       'Close':[close], 'Adj Close':[adj_close], 
+                       'Volume':[volume]})
+    
+    df['Date'] = pd.to_datetime(df['Date']) #convert str to datetime
+    df["High"] = (df["High"].astype(float)).round(2) #convert str to float and only have 2 decimal places
+    df["Low"] = (df["Low"].astype(float)).round(2) # same as above
+    df["Close"] = (df["Close"].astype(float)).round(2) # same as above
+    df["Adj Close"] = (df["Adj Close"].astype(float)).round(2) # same as above
+    df["Volume"] = df["Volume"].astype('Int64') #conver str to int
+    df = df.rename(columns={'Adj Close': 'Adj_Close'})
+    df = df.rename(columns={'Date': 'Date_Recorded'})
     
     return df, date
 
@@ -85,7 +94,7 @@ def scrape_stock_info(today_date):
     workday = workday_check(date, today_date)
 
     """delete the following line, this is used for weekend develoopment only"""
-    workday = True
+    #workday = True
 
     """Adjust {date} back to {today_date} when done with weekend development""" 
     if workday:
@@ -111,6 +120,17 @@ def write_gcs(df: pd.DataFrame, path: Path) -> None:
     pass
 
 
+@task(log_prints=True, retries=2)
+def write_bq(df: pd.DataFrame) -> None:
+    """Write DataFrame to BigQuery"""
+    gcp_credentials_block = GcpCredentials.load("pltr-gcp-creds")
+    
+    df.to_gbq(
+        destination_table="pltr_stock_info.pltr_historical_data",
+        project_id="de-project-pltr",
+        credentials=gcp_credentials_block.get_credentials_from_service_account(),
+        if_exists="append",
+    )
 
 @flow()
 def scrape_load_to_gcs_bq():
@@ -134,7 +154,7 @@ def scrape_load_to_gcs_bq():
     get the info from GCS and append it to BigQuery
     How do I get it into dbt to do transformation?
     """
-    """Issue: not saving stuff to local, b/c I got today's date, which matches yahoo finance's date"""
+
  
     today_date = date.today()
 
@@ -145,7 +165,7 @@ def scrape_load_to_gcs_bq():
 
     if path:
         write_gcs(df, path)
-        #write_bq(path)
+        write_bq(df)
    
 
     
