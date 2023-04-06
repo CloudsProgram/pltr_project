@@ -61,8 +61,8 @@ def web_to_gcs(dataset_url: str) -> None:
 
 
 if __name__ == "__main__":
+    #Ex: from beg to 3/31/23
+    # dataset_url = "https://query1.finance.yahoo.com/v7/finance/download/PLTR?period1=1601510400&period2=1680652800&interval=1d&events=history&includeAdjustedClose=true"
     dataset_url = "Put your copied link here"
 
-    #from beg to 3/31/23
-    dataset_url = "https://query1.finance.yahoo.com/v7/finance/download/PLTR?period1=1601510400&period2=1680307200&interval=1d&events=history&includeAdjustedClose=true"
     web_to_gcs(dataset_url)
