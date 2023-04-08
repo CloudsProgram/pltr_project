@@ -127,6 +127,7 @@ This project has been tested with Windows 10, utilizing conda virtual environmen
 	1.	Go to [Palantir Technologies Inc. (PLTR) Stock Historical Prices & Data - Yahoo Finance](https://finance.yahoo.com/quote/PLTR/history?p=PLTR)
 
 	2. Adjust time period from Oct 1, 2020 to today's date, and then click apply
+	![change_date_apply_yahoo_stock](/images/change_date_apply_yahoo_stock.jpg)
 		
 	3. Go to lower right download link, right click and then select copy link
 		
