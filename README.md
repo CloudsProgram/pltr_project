@@ -238,6 +238,8 @@ This project has been tested with Windows 10, utilizing conda virtual environmen
 				
 			- Create "Trade Volume Heat map with Table"
 				○ Add a Chart (drop down) >> Table, Table with Heat Map >> SETUP section >> Metric = Trade_Volume, Descending
+
+![pltr_dashboard](/images/pltr_dashboard.jpg)
 				
 			
 		
