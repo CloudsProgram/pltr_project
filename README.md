@@ -38,80 +38,107 @@ This project has been tested with Windows 10, utilizing conda virtual environmen
 
 		a. Set system's environmental variable
 
-			i. Create variable name `GOOGLE_APPLICATION_CREDENTIALS`. 
-			Variable value as the full path to the JSON key that you downloaded previously
+		-	Create variable name `GOOGLE_APPLICATION_CREDENTIALS`. 
+		Variable value as the full path to the JSON key that you downloaded previously
+
 			(if using Windows, start menu >> type "env", select the appeared option and click environmental variables >> click New)
 		
 		
 		
-		c. On your terminal (Use Git Bash) Run: `gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS`
-			i. Should see message saying that you service account is activated
+		b. On your terminal (Use Git Bash) Run: `gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS`
+
+		Should see a message saying that you service account is activated
 
 	6. Set up before Using Terraform:
 
 		a. Allow Terraform to be executed from any directory:
+		-	Download terraform, put it in desired directory
 
-			i. Download terraform, put it in desired directory
+		-	In your system's environmental variable, Under the variable PATH, add an absolute path to the directory that holds terraform executable
 
-			ii. In your system's environmental variable, Under the variable PATH, add an absolute path to the directory that holds terraform executable
 
 		b. Enable GCP APIs
 
-		-	For following links, select the right project and click enable:
+		-	Clock on the following links, select the right project and hit enable:
 
-			-	[Enable IAM APIS](https://console.cloud.google.com/apis/library/iam.googleapis.com)
-			-	[IAMcredentials APIS](https://console.cloud.google.com/apis/library/iamcredentials.googleapis.com)
+			[Enable IAM APIS](https://console.cloud.google.com/apis/library/iam.googleapis.com)
+
+			[IAMcredentials APIS](https://console.cloud.google.com/apis/library/iamcredentials.googleapis.com)
 
 	7. Terraform Configeration to help deploy GCS Bucket and BigQuery:
 
 		a. In the cloned files, go to `variables.tf`
-		
-			i. Adjust region, `default = "your-region1"`
+		At line 9, region variable change `default` into
+		`default = "your-region1"`
 
 		b. In your terminal cd to terraform directory
 
-			i. Run: gcloud auth application-default login
+		c. Run: `gcloud auth application-default login`
 
-			ii. Y to continue, and make sure you are on the right google account when Allow access. You should see authentication confirmed message.
+		d. `Y` to continue, and make sure you are on the right google account when Allow access. You then should see authentication confirmed message.
 
-			iii. Run: terraform init     (note: if gives an error message, run it one more time)
+		e. Run: `terraform init` (note: if gives an error message, run it one more time)
 
-			iv. Run: terraform plan  (input your gcp project ID that you noted from the beginning, and make sure configuration looks ok)
+		f. Run: `terraform plan`  (input your gcp project ID that you noted from the beginning, and make sure configuration looks ok)
 
-			v. Run: terraform apply (On GCP, you should see BigQuery set up, and also  new bucket in GCS)
+		g. Run: `terraform apply` (On GCP, you should see BigQuery set up, and also a new bucket in GCS)
 
-- Pipeline set up: (Note: All execution of command assume being in virtual env after 1.a.ii. Section)
-	1. Set up virtual env and make sure all dependencies are installed via requirement.txt
-		a. Create virtual env: (I use conda to set up virtual environment, You can use your desired way and adjust accordingly)
-			i. In terminal, run  conda create --name pltr_project python=3.9
-			ii. Activate env with conda activate pltr_project
-		b. Install dependencies:
-			i. Change directory to where requirements.txt is located.
-			ii. Install requirements with:
-				1) pip install -r requirements.txt
+- **Pipeline dependencies and prefect blocks set up**
+
+	1. Set up virtual env and make sure all dependencies are installed via `requirement.txt`
+
+		-	 Create virtual env: (I use conda to set up virtual environment, You can use your desired way and adjust accordingly)
+
+		-	 In terminal, run  `conda create --name pltr_project python=3.9`
+
+		-	Activate env with `conda activate pltr_project`
+
+		-	Install dependencies:
+			
+			- Change directory to where requirements.txt is located.
+
+			-	Install requirements with:
+				`pip install -r requirements.txt`
+
 	2. Prefect Block Set up:
-		a. On separate terminal run prefect orion start
-		b. On another terminal, register gcp block with: prefect block register -m prefect_gcp
+
+		a. On separate terminal run: `prefect orion start`
+
+		b. On another terminal, register gcp block with: 
+		
+		`prefect block register -m prefect_gcp`
+
 		c. Create GCS block:
-			i. Go to orion GUI (http://127.0.0.1:4200/): blocks >> add a block with "+">> add "GCS Bucket"
-			Block Name: pltr-gcs
-			Bucket: your respective GCS bucket name, in my case it is: pltr_data_lake_de-project-pltr
-				1) Add GCP Credentials:
-					a) Click add,  from previous service account's json key, open it , copy and paste all info in there into Service Account Info, hit create
-					b) Select the key we just created, then press create.
-	3. Initial historical stock data upload
-		a. Go to Palantir Technologies Inc. (PLTR) Stock Historical Prices & Data - Yahoo Finance
-		b. Adjust time period from Oct 1, 2020 to today's date, and then click apply
+
+		-	Go to orion GUI (http://127.0.0.1:4200/): blocks >> add a block with "+">> add "GCS Bucket"
+
+			Block Name: `pltr-gcs`
+
+			Bucket: `your respective GCS bucket name`, in my case it is: `pltr_data_lake_de-project-pltr`
+
+			Add GCP Credentials:
+
+			-	 Click add, open the json key we have for the service account, then copy and paste all info in there into Service Account Info and hit "create"
+
+			-	Select the key we just created, then press create.
+					
+-	**Initial historical stock data upload**
+
+	1.	Go to [Palantir Technologies Inc. (PLTR) Stock Historical Prices & Data - Yahoo Finance](https://finance.yahoo.com/quote/PLTR/history?p=PLTR)
+
+	2. Adjust time period from Oct 1, 2020 to today's date, and then click apply
 		
-		c. Go to lower right download link, right click and then select copy link
+	3. Go to lower right download link, right click and then select copy link
 		
-		d. Go to initial_historical_info_etl_gcs.py, paste the copy linked into "Put your copied link here"
+	4. Go to initial_historical_info_etl_gcs.py, paste the copy linked into "Put your copied link here"
 		
-		e. Run initial_etl_gcs.py
+	5. Run initial_etl_gcs.py
 			i. Confirm to make sure that  the file is in the correct bucket & directory.
 			
-		f. Go to BigQuery (make sure you are in the right project to begin with)
-		g. On the dataset "pltr_stock_info", click on the 3 dot option to create a new table.
+	6. Go to BigQuery (make sure you are in the right project to begin with)
+
+	7. On the dataset "pltr_stock_info", click on the 3 dot option to create a new table.
+
 			i. Source: Google Cloud Storage >> browse >> (find the data we just uploaded to gcs) click on the file and select (in my case it is pltr_historic_till_2023-03-30.parquet)
 			
 			ii. Name the table "pltr_historical_data", and click create table.
@@ -119,6 +146,7 @@ This project has been tested with Windows 10, utilizing conda virtual environmen
 			
 	
 	4. Automation set up 
+
 		a. (Note: Can Just execute extract_load_to_GCS_BQ.py instead of waiting for 2pm PST to execute to be able to proceed with DBT and looker studio set up)
 		○ Set up schedule:
 			□ Need to Deploy first to allow for schedule
