@@ -130,75 +130,98 @@ This project has been tested with Windows 10, utilizing conda virtual environmen
 	![change_date_apply_yahoo_stock](/images/change_date_apply_yahoo_stock.jpg)
 		
 	3. Go to lower right download link, right click and then select copy link
+	![copy_download_link_yahoo](/images/copy_download_link_yahoo.jpg)
 		
-	4. Go to initial_historical_info_etl_gcs.py, paste the copy linked into "Put your copied link here"
-		
-	5. Run initial_etl_gcs.py
-			i. Confirm to make sure that  the file is in the correct bucket & directory.
+	4. Go to `initial_historical_info_etl_gcs.py`, paste the copy linked into "Put your copied link here" line 66
+	
+	5. Run `python initial_etl_gcs.py`
+
+		i. Confirm to make sure that the file is in the correct bucket & directory.
+		![gcs_correct_dir](/images/gcs_correct_dir.jpg)
 			
-	6. Go to BigQuery (make sure you are in the right project to begin with)
+	6. Go to BigQuery (make sure you are in the right project)
 
 	7. On the dataset "pltr_stock_info", click on the 3 dot option to create a new table.
 
-			i. Source: Google Cloud Storage >> browse >> (find the data we just uploaded to gcs) click on the file and select (in my case it is pltr_historic_till_2023-03-30.parquet)
+		i. `Source`: `Google Cloud Storage` >> `browse` >> (find the data we just uploaded to gcs) click on the file and select (in my case it is pltr_historic_till_2023-03-30.parquet)
 			
-			ii. Name the table "pltr_historical_data", and click create table.
-			Should see the table appear
+		ii. Name the table `pltr_historical_data`, and click create table. Then should see the table appear under `pltr_stock_info` dataset
 			
 	
-	4. Automation set up 
+-	**Pipeline Automation set up**
 
-		a. (Note: Can Just execute extract_load_to_GCS_BQ.py instead of waiting for 2pm PST to execute to be able to proceed with DBT and looker studio set up)
-		○ Set up schedule:
-			□ Need to Deploy first to allow for schedule
-				□ Deploy: execute the following
-					prefect deployment build ./extract_load_to_GCS_BQ.py:scrape_load_to_GCS_BQ -n "scrape yahoo schedule test"
-					prefect deployment apply scrape_load_to_GCS_BQ-deployment.yaml
-				□ SET Schedule in GUI:
-				□ Deployments >>>  respective name >>> three dots on the right hand side, click edit >>>
-				
-			□ Need an agent to pick it up
-				□ Set up agent with: (in a separate terminal)
-					prefect agent start -q default    (so it looks for default workqueue)
-			□ Now: scheduled stuff gets executed
-		
-	5. DBT Set up (manual)
-		- Run: dbt init, you'll be prompted for setup configuration.
-			○ Enter a name for your project: InsertYourProjectName (in my case: pltr_stock_info)
-			○ Which database would you like to use?(Should see BigQuery as the only option) 1
-			○ Desired authentication method: 1 (select oauth)
-			○ If choose [1] oauth:
-				§ Project (project ID) : ProjectID (in my case: de-project-pltr)
-				§ Dataset: pltr_stock_info
-				§ Threads (1 or more): 4
-				§ Job_execution_timeout_seconds [300]: no input, presss enter to continue
-				§ Desired location option: 1 [US] 2[EU], depends where you live  (Note: there might be an error down the line that needs to be fixed)
-		- Run:  gcloud auth application-default login , which will pop up browser to authenticate (remember to select the right google account for this)
-		- Navigate to pltr_stock_info folder (created by dbt) and run
-			dbt debug
-			○ If all checks pass, run:
-			dbt run
-		
-			○ If it throws an Error saying: "404 Not found: ProjectID:pltr_stock_info was not found in location US. 
-			
-			
-					First, go to BigQuery, click on pltr_stock_info dataset, it should show the data location, in my case it is us-west1. Note down your location.
-					
-					Remember when we were configuring and selecting either US or EU?
-					After picking an option, it will say Profile pltr_stock_info written to (in mycase: C:\Users\cloud\.dbt\profiles.yml ), find your equivalent, and go to profiles.yml
-					
-					Open profiles.yml, change the location from US to your location that you just noted. For me it becomes us-west1, and save it.
-					
-			○ At this point, you can go to BigQuery and see dbt established my_frist_dbt_model and my_second_dbt_model tables.
-		
-		
-	Conduct Dbt transformation.
-		○ Cd to Pltr_stock_info directory >cd to> models , create selective_pltr_info.sql file in it:
-		
-		○ Run: dbt run
-		○ Should see creation of a table named selective_pltr_info in BIgQuery
+	**Please pay attention to the following notes to save yourself time**
+
+	(Note 1: The pipeline is designed to execute on weekdays only to avoid duplicate data, so testing should only take place on PST timezone weekdays)
+
+	(Note 2: If you wish to skip waiting for 2pm PST scheduled execution, there are two options)
+
+	Option 1:  Just execute the pipeline by running `python extract_load_to_GCS_BQ.py`, then go straight to DBT section.
 	
-	6. Looker Studio Set up (manual)
+	Option 2: Change prefect cron job equivlant to few minutes pass your time. Ex: It is currently 5pm EST, I would schedule 5:03pm, so the schedule will take place and be ready to execute 
+
+
+	1.	Deploy script
+
+	-	Run:
+				`prefect deployment build ./extract_load_to_GCS_BQ.py:scrape_load_to_GCS_BQ -n "scrape yahoo schedule test"`
+
+		This will establsh a yaml file to allow for deployment
+
+	-	Then Run:
+
+		`prefect deployment apply scrape_load_to_GCS_BQ-deployment.yaml`
+
+		Then should see `scrape-load-to-GCS-BQ` under prefect GUI's deployments section.
+
+
+	2.	SET Schedule in GUI:
+
+	-	 Deployments >>>  respective name >>> three dots on the right hand side, click edit >>>
+	![prefect_deployment_schedule](/images/prefect_deployment_schedule.jpg)
+	-	Go to scheduling section and click edit, then set up the configuration shown in the picture (*make adjustments to cron job if you want it to execute sooner*)
+	![prefect_cron](/images/prefect_cron.jpg)
+
+				
+	3.	Need an agent to pick up job in order to execute:
+
+	-	in a seperate terminal, we will set up agent that listens to any scheduled job (At this point we have 3 terminals, one for orian server, one for executing scripts, one will be for agent which waits for schedule job to execute)
+		-	`prefect agent start -q default`    (so it looks for default workqueue)
+
+		- At this point, if 2pm PST comes around, the agent will execute the script `scrape-load-to-GCS-BQ`
+		
+-	**DBT Set up (manual) with transformation**
+	- Run: `dbt init`, you'll be prompted for setup configuration.
+		
+		- Enter a name for your project: InsertYourProjectName (in my case: `pltr_stock_info`)
+		- Which database would you like to use?(Should see BigQuery as the only option) `1`
+		- Desired authentication method: 1 (select oauth)
+		- If choose oauth:
+			- Project (project ID) : your-project-id (in my case: `de-project-pltr`)
+			- Dataset: `pltr_stock_info`
+			- Threads (1 or more): `4`
+			- Job_execution_timeout_seconds [300]: no input, presss enter to continue
+			- Desired location option: 1 [US] 2[EU], depends where you live  (Note: there might be an error down the line that will be fixed with later instructions)
+	
+		- Run: ` gcloud auth application-default login` , which will pop up browser to authenticate (remember to select the right google account for this)
+
+		- Navigate to pltr_stock_info folder (created by dbt) and run `dbt debug`
+			- If all checks pass, run: `dbt run`, and you can go to BigQuery and see dbt established my_frist_dbt_model, my_second_dbt_model and selective_pltr_info tables.
+		
+			- If it throws an Error saying: `404 Not found: ProjectID:pltr_stock_info was not found in location US or EU`
+
+				-	First, go to BigQuery, click on `pltr_stock_info` dataset, it should show the data location, in my case it is `us-west1`. Note down your location.
+			
+				Remember when we were configuring and selecting either US or EU?
+
+				After picking an option, it will say Profile pltr_stock_info written to (in mycase: `C:\Users\cloud\.dbt\profiles.yml` ), find your equivalent, and go to profiles.yml
+					
+				Open `profiles.yml`, change the location from `US` to your location that you just noted. For me it becomes `us-west1`, and save it.
+					
+		
+		
+
+- **Looker Studio Set up (manual)**
 
 		Step to create the dashboard:
 		Go to looker studio, make sure you are using the correct google account
