@@ -1,59 +1,85 @@
-In README.md
+# Palantir(PLTR) Stock Data Pipeline
+**Table of contents**
+-	[Purpose](#purpose)
+-	[Technologies](#technologies)
+-	[Pipeline](#pipeline)
+-	[Project Reproduction](#project-reproduction)
+-	[Improvements](#improvements)
 
-Palantir(PLTR) Stock Data Pipeline
-
-Purpose:
-Technologies:
-	Git
-	
-Pipeline: (draw diagram), architecture description
-Reproduce the Project
-Improvements (Optional)
+## Purpose
+## Technologies
+## Pipeline
+## Project Reproduction
+## Improvements
 
 
+This project has been tested with Windows 10, utilizing conda virtual environment. Please Adjust accordingly to your system.
 
+- **Clone the repo to the desired directory**
+- **Set up GCP**
+	1. Register for a GCP account. Create a Project (note down the project ID).
 
-Reproduce the Project:
-This Project has been tested with Windows 10, utilizing conda virtual environment. Please Adjust accordingly to your System.
+	2. Set up GCP IAM service account:
 
-- Clone the repo to desired directory
-- Set up GCP
-	1. Register for a GCP account. Create a Project (note down project ID).
-	2. Set up IAM service account:
 		a. Go to IAM >>  Service accounts  >> Create service account
 			
 		
 		b. Grant roles: Viewer, Storage Admin, Storage Object Admin, BigQuery Admin 
+
 		c. Skip 3rd option
-	3. Create and Store key to your desired directory 
+
+	3. Create and Store key to your desired directory
+
 		a. With the service account you just created, on the right side. Click Actions (3 dots) >> manage keys >> ADD KEY (choose JSON option). Put the key to desired directory
-	4. Install Google SDK
-	5. Authenticate key:
-		a. Set system's environmental variable 
-		b. Create variable name GOOGLE_APPLICATION_CREDENTIALS. 
-		Variable value as the full path to the JSON
-		 (if using Windows, start menu >> type "env", select the appeared option and click environmental variables >> click New)
+
+	4. Install [gcloud CLI](https://cloud.google.com/sdk/docs/install), type  `gcloud version` in your terminal to see if cli is installed or not
+
+	5. Initializing gcloud CLi:
+
+		a. Set system's environmental variable
+
+			i. Create variable name `GOOGLE_APPLICATION_CREDENTIALS`. 
+			Variable value as the full path to the JSON key that you downloaded previously
+			(if using Windows, start menu >> type "env", select the appeared option and click environmental variables >> click New)
 		
 		
-		c. On your terminal (Use Git Bash) Run: gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
+		
+		c. On your terminal (Use Git Bash) Run: `gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS`
 			i. Should see message saying that you service account is activated
+
 	6. Set up before Using Terraform:
+
 		a. Allow Terraform to be executed from any directory:
+
 			i. Download terraform, put it in desired directory
+
 			ii. In your system's environmental variable, Under the variable PATH, add an absolute path to the directory that holds terraform executable
+
 		b. Enable GCP APIs
-		§ For following links, select the right project and click enable:
-			□ Enable IAM APIS: https://console.cloud.google.com/apis/library/iam.googleapis.com
-			□ IAMcredentials APIS: https://console.cloud.google.com/apis/library/iamcredentials.googleapis.com
-	7. Terraform Config to help deploy GCS Bucket and BigQuery:
-		a. In the cloned files, go to variables.tf
-			i. Adjust region, default="your-region1"
+
+		-	For following links, select the right project and click enable:
+
+			-	[Enable IAM APIS](https://console.cloud.google.com/apis/library/iam.googleapis.com)
+			-	[IAMcredentials APIS](https://console.cloud.google.com/apis/library/iamcredentials.googleapis.com)
+
+	7. Terraform Configeration to help deploy GCS Bucket and BigQuery:
+
+		a. In the cloned files, go to `variables.tf`
+		
+			i. Adjust region, `default = "your-region1"`
+
 		b. In your terminal cd to terraform directory
+
 			i. Run: gcloud auth application-default login
+
 			ii. Y to continue, and make sure you are on the right google account when Allow access. You should see authentication confirmed message.
+
 			iii. Run: terraform init     (note: if gives an error message, run it one more time)
+
 			iv. Run: terraform plan  (input your gcp project ID that you noted from the beginning, and make sure configuration looks ok)
+
 			v. Run: terraform apply (On GCP, you should see BigQuery set up, and also  new bucket in GCS)
+
 - Pipeline set up: (Note: All execution of command assume being in virtual env after 1.a.ii. Section)
 	1. Set up virtual env and make sure all dependencies are installed via requirement.txt
 		a. Create virtual env: (I use conda to set up virtual environment, You can use your desired way and adjust accordingly)
