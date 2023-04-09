@@ -12,6 +12,8 @@ The goal of this data pipeline is to capture PLTR stock data at the end of each 
 2. Top dates that have the highest trading volume
 3. Closing price for the last 5 business days
 
+![pltr_dashboard](/images/pltr_dashboard.png)
+
 
 ## Technologies
 -	Google Cloud Platform
