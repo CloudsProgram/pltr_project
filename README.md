@@ -1,18 +1,57 @@
 # Palantir(PLTR) Stock Data Pipeline
 **Table of contents**
--	[Purpose](#purpose)
+-	[Agenda](#agenda)
 -	[Technologies](#technologies)
 -	[Pipeline](#pipeline)
 -	[Project Reproduction](#project-reproduction)
 -	[Improvements](#improvements)
 
-## Purpose
+## Agenda
+The goal of this data pipeline is to capture PLTR stock data at the end of each business day, then transform and load into data warehouse which then gets visualization on
+1. Historical prices
+2. Top dates that have the highest trading volume
+3. Closing price for the last 5 business days
+
+
 ## Technologies
+-	Google Cloud Platform
+	-	Cloud Storage Buckets (GCS): Data Lake
+	-	BigQuery: Data Warehouse
+
+-	Terraform: Infrastructure as code that deploys Bucket and BiqQuery
+
+-	Python: Data pipeline script that restrives transforms and loads into Bucket, and then also load into BigQuery
+
+-	BeautifulSoup / Request: Allows one to scrape data from Yahoo Finance 
+
+-	Prefect: Pipeline orchestration tool. Its server will be host locally, and is called Orion. It will allow me to schedule pipeline execution. Furthermore, prefect have agents the polls pipelines that are in queue and execute them. 
+
+-	DBT: Conduct data transformation
+
+-	Google looker Studio: Data Visualization
+
 ## Pipeline
+Following Conditions needs to be met (Steps provided in [Project Reproduction](#project-reproduction) Section) for successful pipeline run:
+-	Prefect's Orion server running locally (With schedule set up)
+-	Prefect's Agent is listening 
+-	Initial PLTR historical data uploaded to BigQuery
+
+![pipeline_ver_1.0](/images/pipeline_ver_1.0.png)
+
+Explanation:
+-	Have Terraform deploy Google Cloud Storage Bucket & BigQuery
+-	When it reaches weekday 2pm PST, Prefect agent executes the scheduled job
+	-	Pipeline scrapes today's stock information from Yahoo Finance.
+	-	Do some transformation with the data, and convert into parquet to retain field 	types.
+	-	Upload the parquet file to the storage bucket (To keep semi-transformed data record)
+	-	Append the data to the PLTR historical data table in BigQuery
+
+-	Then we run dbt to do transformation on the PLTR historical data table which then establish another table in BigQuery which would used for Visualization
+-	We use Looker Studio to create visualization of the latest transformed PLTR historical data table.
+
+
+
 ## Project Reproduction
-## Improvements
-
-
 This project has been tested with Windows 10, utilizing conda virtual environment. Please Adjust accordingly to your system.
 
 - **Clone the repo to the desired directory**
@@ -102,7 +141,7 @@ This project has been tested with Windows 10, utilizing conda virtual environmen
 
 	2. Prefect Block Set up:
 
-		a. On separate terminal run: `prefect orion start`
+		a. On separate terminal run: `prefect orion start` which runs a local prefect server
 
 		b. On another terminal, register gcp block with: 
 		
@@ -242,7 +281,7 @@ This project has been tested with Windows 10, utilizing conda virtual environmen
 ![pltr_dashboard](/images/pltr_dashboard.png)
 				
 			
-		
+## Improvements		
 		
 		
 			
