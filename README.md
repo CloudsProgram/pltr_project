@@ -4,7 +4,7 @@
 -	[Technologies](#technologies)
 -	[Pipeline](#pipeline)
 -	[Project Reproduction](#project-reproduction)
--	[Improvements](#improvements)
+-	[Future Improvements](#future-improvements)
 
 ## Agenda
 The goal of this data pipeline is to capture PLTR stock data at the end of each business day, then transform and load into data warehouse which then gets visualization on
@@ -281,7 +281,11 @@ This project has been tested with Windows 10, utilizing conda virtual environmen
 ![pltr_dashboard](/images/pltr_dashboard.png)
 				
 			
-## Improvements		
+## Future Improvements
+-	Automization of DBT transformation
+-	Automization of updates of Looker Studio visualization
+-	Have everything run via cloud
+-	Dockerize the set up
 		
 		
 			
