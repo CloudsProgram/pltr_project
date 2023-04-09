@@ -203,7 +203,7 @@ This project has been tested with Windows 10, utilizing conda virtual environmen
 	1.	Deploy script
 
 	-	Run:
-				`prefect deployment build ./extract_load_to_GCS_BQ.py:scrape_load_to_GCS_BQ -n "scrape yahoo schedule test"`
+				`prefect deployment build extract_load_to_GCS_BQ.py:scrape_load_to_gcs_bq -n "scrape yahoo schedule test 1"`
 
 		This will establsh a yaml file to allow for deployment
 
